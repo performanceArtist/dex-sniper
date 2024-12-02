@@ -83,6 +83,13 @@ export class MediatorService {
           message: `Switch ok`,
         };
 
+      case 'chatId':
+        const chatId = await user.getChatId();
+        return {
+          type: 'genericSuccess',
+          message: `Your chat id: ${chatId}`,
+        };
+
       case 'addToken':
         const token = command.payload.token;
         const tokens = await user.addToken(token);

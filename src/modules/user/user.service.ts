@@ -101,6 +101,11 @@ class User implements MediatorUser {
     user.save();
   };
 
+  public getChatId = async () => {
+    const user = await this.getUser();
+    return user.chatId;
+  };
+
   public addToken = async (token: string) => {
     const user = await this.getUser({
       tokens: true,
@@ -206,10 +211,10 @@ class User implements MediatorUser {
     const user = await this.getUser({
       subscriptions: true,
     });
-    if (!user.subscriptions.find((s) => s.to === address))
+    const subscription = user.subscriptions.find((s) => s.to === address)
+    if (!subscription)
       throw error('Subscription not found');
-    user.subscriptions = user.subscriptions.filter((s) => s.to !== address);
-    await user.save();
+    await subscription.remove()
   };
 
   public swap = async (
@@ -276,13 +281,19 @@ class User implements MediatorUser {
   };
 
   public send = async (to: string, amount: number, token: string) => {
+    const user = await this.getUser({
+      tokens: true,
+    });
     const supported = await this.factory.repository.token.findOne({
       where: {
         symbol: token,
+        chainId: user.chainId,
       },
     });
     if (!supported) throw error(`Token not found`);
-    const user = await this.getUser();
+    if (!user.tokens.find((t) => t.symbol === token))
+      throw error(`Add token to your tokens to send`);
+
     const crypto = this.factory.cryptoFactory.getInstance(user.chainId);
     const wallet = crypto.getWallet(user.privateKey);
 

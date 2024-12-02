@@ -50,6 +50,10 @@ const getClientCommand = ({
           chainId: chains[match[1] as keyof typeof chains],
         },
       };
+    case 'chatId':
+      return {
+        type: 'chatId',
+      };
     case 'addToken':
       return {
         type: 'addToken',

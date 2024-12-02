@@ -26,7 +26,7 @@ export const dataSource = new DataSource({
 const populateAll = async () => {
   await dataSource.initialize();
 
-  const uniswap = await getPools();
+  const uniswap = await getPools(appConfig.GRAPH_API_KEY);
   if (!uniswap) throw 'No pools found';
 
   await Promise.all(uniswap.map(populate));

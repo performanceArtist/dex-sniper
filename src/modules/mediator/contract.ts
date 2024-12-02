@@ -26,6 +26,7 @@ export type MediatorUser = {
     importKey?: string,
   ) => Promise<string>;
   switchChain: (chainId: number) => Promise<void>;
+  getChatId: () => Promise<number>;
   addToken: (token: string) => Promise<string[]>;
   removeToken: (token: string) => Promise<void>;
   balance: () => Promise<
@@ -81,6 +82,9 @@ export type Command =
       payload: {
         chainId: number;
       };
+    }
+  | {
+      type: 'chatId';
     }
   | {
       type: 'addToken';

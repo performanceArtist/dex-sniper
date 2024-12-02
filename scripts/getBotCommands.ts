@@ -7,7 +7,7 @@ const regexDescription: CommandRegex = {
   name: '$name',
   address: '$address',
   privateKey: '$privateKey',
-  token: '$token symbol',
+  tokenSymbol: '$token symbol',
   amount: '$amount',
   chain: 'BNB|Sepolia|Polygon',
   side: 'buy|sell|any',

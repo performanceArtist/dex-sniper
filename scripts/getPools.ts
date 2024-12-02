@@ -55,13 +55,10 @@ export type UniswapPoolData = {
   chainId: number;
 };
 
-export const getPools = async () => {
-  const API_KEY = process.env.GRAPH_API_KEY;
-  if (!API_KEY) throw 'No api key';
-
+export const getPools = async (apiKey: string) => {
   const endpoints = chains.map((c) => ({
     ...c,
-    url: `https://gateway.thegraph.com/api/${API_KEY}/subgraphs/id/${c.graphId}`,
+    url: `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/${c.graphId}`,
   }));
 
   try {
