@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: postgres:13.3
+    container_name: postgres_db
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: sniper_db
+      POSTGRES_USER: sniper_user
+      POSTGRES_PASSWORD: sniper_password
