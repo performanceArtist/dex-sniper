@@ -1,9 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import {
-  userError as error,
-  MediatorUser,
-  MediatorUserFactory,
-} from '../mediator/contract';
 import { FindOneOptions } from 'typeorm';
 import { SubscriptionSide } from 'src/shared/types';
 import { UniswapFactoryService } from 'src/modules/uniswap/uniswap.service';
@@ -17,31 +12,32 @@ import {
 
 export const MAX_TOKENS = 5;
 
+export type UserError = {
+  type: 'userError';
+  message: string;
+};
+
+export const userError = (message: string): UserError => ({
+  type: 'userError',
+  message,
+});
+
+export const isUserError = (
+  error: unknown,
+): error is UserError => (error as any)['type'] === 'userError';
+
 @Injectable()
-export class UserService implements MediatorUserFactory {
+export class UserService {
   constructor(
     public repository: RepositoryService,
     public cryptoFactory: CryptoFactoryService,
     public uniswapFactory: UniswapFactoryService,
   ) {}
 
-  private users: MediatorUser[] = [];
-
-  public getInstance = (id: number) => {
-    const stored = this.users.find((user) => user.id === id);
-    if (!stored) {
-      const newUser = this.createInstance(id);
-      this.users.push(newUser);
-      return newUser;
-    } else {
-      return stored;
-    }
-  };
-
-  private createInstance = (id: number) => new User(id, this);
+  public getInstance = (id: number) =>  new User(id, this);
 }
 
-class User implements MediatorUser {
+export class User {
   constructor(
     public id: number,
     private factory: UserService,
@@ -56,7 +52,7 @@ class User implements MediatorUser {
       },
       relations,
     });
-    if (!user) throw error('User not found');
+    if (!user) throw userError('User not found');
     return user;
   };
 
@@ -71,7 +67,7 @@ class User implements MediatorUser {
       },
     });
     if (exists) {
-      throw error('User registered');
+      throw userError('User registered');
     }
     const crypto = this.factory.cryptoFactory.getInstance(chainId);
     const { address, privateKey } = (() => {
@@ -116,16 +112,16 @@ class User implements MediatorUser {
         chainId: user.chainId,
       },
     });
-    if (!supported) throw error(`Token not found`);
+    if (!supported) throw userError(`Token not found`);
 
     if (
       user.tokens.filter((token) => token.chainId === user.chainId).length >=
       MAX_TOKENS
     )
-      throw error(`Max ${MAX_TOKENS} tokens for each chain`);
+      throw userError(`Max ${MAX_TOKENS} tokens for each chain`);
 
     if (user.tokens.find((token) => supported.id === token.id))
-      throw error('Token already added');
+      throw userError('Token already added');
 
     const newToken = new TokenEntity();
     newToken.id = supported.id;
@@ -148,10 +144,10 @@ class User implements MediatorUser {
         chainId: user.chainId,
       },
     });
-    if (!supported) throw error(`Token not found`);
+    if (!supported) throw userError(`Token not found`);
 
     if (!user.tokens.find((token) => supported.id === token.id))
-      throw error('No token present to remove');
+      throw userError('No token present to remove');
 
     user.tokens = user.tokens.filter(({ symbol }) => symbol !== token);
     await user.save();
@@ -213,7 +209,7 @@ class User implements MediatorUser {
     });
     const subscription = user.subscriptions.find((s) => s.to === address)
     if (!subscription)
-      throw error('Subscription not found');
+      throw userError('Subscription not found');
     await subscription.remove()
   };
 
@@ -238,8 +234,8 @@ class User implements MediatorUser {
     const tokenOut = user.tokens.find(
       (token) => token.symbol === tokenOutSymbol && token.chainId === chainId,
     );
-    if (!tokenIn) throw error(`${tokenInSymbol} token not found`);
-    if (!tokenOut) throw error(`${tokenOutSymbol} token not found`);
+    if (!tokenIn) throw userError(`${tokenInSymbol} token not found`);
+    if (!tokenOut) throw userError(`${tokenOutSymbol} token not found`);
     const crypto = this.factory.cryptoFactory.getInstance(chainId);
     const wallet = crypto.getWallet(privateKey);
     const uniswap = this.factory.uniswapFactory.getInstance(
@@ -261,7 +257,7 @@ class User implements MediatorUser {
       },
     });
     const pool = pool1 || pool2;
-    if (!pool) throw error('No pool found');
+    if (!pool) throw userError('No pool found');
 
     const result = await uniswap.doSwap(
       wallet,
@@ -290,9 +286,9 @@ class User implements MediatorUser {
         chainId: user.chainId,
       },
     });
-    if (!supported) throw error(`Token not found`);
+    if (!supported) throw userError(`Token not found`);
     if (!user.tokens.find((t) => t.symbol === token))
-      throw error(`Add token to your tokens to send`);
+      throw userError(`Add token to your tokens to send`);
 
     const crypto = this.factory.cryptoFactory.getInstance(user.chainId);
     const wallet = crypto.getWallet(user.privateKey);

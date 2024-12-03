@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { HttpController } from './web.controller';
-import { WebService } from './web.service';
 import { NotificationGateway } from './notification.gateway';
+import { UserModule } from '../user/user.module';
 
 @Module({
-  providers: [WebService, NotificationGateway],
-  exports: [WebService],
-  imports: [],
+  providers: [NotificationGateway],
+  exports: [],
+  imports: [UserModule],
   controllers: [HttpController],
 })
 export class WebModule {}

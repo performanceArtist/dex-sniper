@@ -7,7 +7,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
-import { ReswapResult } from '../mediator/contract';
+import { OnEvent } from '@nestjs/event-emitter';
+import { ReswapResult } from '../subscription/subscription.service';
 
 @WebSocketGateway()
 export class NotificationGateway
@@ -16,6 +17,8 @@ export class NotificationGateway
     OnGatewayConnection<Socket>,
     OnGatewayDisconnect<Socket>
 {
+  constructor() {}
+
   @WebSocketServer() wss: Server;
 
   afterInit(server: Server) {
@@ -45,7 +48,8 @@ export class NotificationGateway
     client.emit('reswap', 'Unsubscribed successfully');
   }
 
-  public notifyReswap(result: ReswapResult) {
+  @OnEvent('reswap')
+  onReswap(result: ReswapResult) {
     const client = this.users[result.userId];
 
     if (client) {

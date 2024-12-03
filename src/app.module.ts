@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from './modules/config/config.module';
-import { DefaultApp } from './implementation/default';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { RepositoryModule } from './modules/repository/repository.module';
@@ -8,6 +7,11 @@ import { UniswapModule } from './modules/uniswap/uniswap.module';
 import { CryptoModule } from './modules/crypto/crypto.module';
 import { ConfigService } from './modules/config/config.service';
 import { ChainId } from './shared/types';
+import { TelegrafModule } from 'nestjs-telegraf';
+import { TelegramModule } from './modules/telegram/telegram.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { SubscriptionModule } from './modules/subscription/subscription.module';
+import { WebModule } from './modules/web/web.module';
 
 @Module({
   imports: [
@@ -16,6 +20,16 @@ import { ChainId } from './shared/types';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '../../', 'public'),
     }),
+    TelegrafModule.forRootAsync({
+      useFactory: ({ appConfig }: ConfigService) => ({
+        token: appConfig.BOT_TOKEN,
+      }),
+      inject: [ConfigService],
+    }),
+    TelegramModule,
+    SubscriptionModule,
+    WebModule,
+    EventEmitterModule.forRoot(),
     CryptoModule.registerAsync({
       useFactory: ({ appConfig }: ConfigService) => ({
         [ChainId.BNB]: {
@@ -54,7 +68,6 @@ import { ChainId } from './shared/types';
         SWAP_ROUTER_ADDRESS: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
       },
     }),
-    DefaultApp,
   ],
   controllers: [],
   providers: [],

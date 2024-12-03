@@ -6,18 +6,41 @@ import {
   UniswapFactoryService,
 } from 'src/modules/uniswap/uniswap.service';
 import { RepositoryService } from '../repository/repository.service';
-import {
-  MediatorReswapper,
-  ReswapResult,
-  ReswapSubscriber,
-} from '../mediator/contract';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
+export type ReswapResult =
+  | {
+      type: 'success';
+      userId: number;
+      tokenIn: {
+        amount: string;
+        symbol: string;
+      };
+      tokenOut: {
+        amount: string;
+        symbol: string;
+      };
+      receipt: string;
+      subscription: {
+        to: string;
+      };
+    }
+  | {
+      type: 'error';
+      userId: number;
+      message: string;
+      subscription: {
+        to: string;
+      };
+    };
 
 @Injectable()
-export class SubscriptionService implements MediatorReswapper {
+export class SubscriptionService {
   constructor(
     private repository: RepositoryService,
     private cryptoFactory: CryptoFactoryService,
     private uniswapFactory: UniswapFactoryService,
+    private eventEmitter: EventEmitter2,
   ) {
     this.initSwapSubscriptions()
       .then(() => console.log('Swap subscriptions initialized'))
@@ -151,13 +174,7 @@ export class SubscriptionService implements MediatorReswapper {
     });
   };
 
-  private reswapSubscribers: ReswapSubscriber[] = [];
-
   private notify(result: ReswapResult) {
-    this.reswapSubscribers.forEach((s) => s(result));
+    this.eventEmitter.emit('reswap', result);
   }
-
-  public onReswap = (subscriber: ReswapSubscriber) => {
-    this.reswapSubscribers.push(subscriber);
-  };
 }
