@@ -22,9 +22,8 @@ export const userError = (message: string): UserError => ({
   message,
 });
 
-export const isUserError = (
-  error: unknown,
-): error is UserError => (error as any)['type'] === 'userError';
+export const isUserError = (error: unknown): error is UserError =>
+  (error as any)['type'] === 'userError';
 
 @Injectable()
 export class UserService {
@@ -34,7 +33,7 @@ export class UserService {
     public uniswapFactory: UniswapFactoryService,
   ) {}
 
-  public getInstance = (id: number) =>  new User(id, this);
+  public getInstance = (id: number) => new User(id, this);
 }
 
 export class User {
@@ -120,7 +119,11 @@ export class User {
     )
       throw userError(`Max ${MAX_TOKENS} tokens for each chain`);
 
-    if (user.tokens.find((token) => supported.id === token.id))
+    if (
+      user.tokens.find(
+        (token) => supported.id === token.id && token.chainId === user.chainId,
+      )
+    )
       throw userError('Token already added');
 
     const newToken = new TokenEntity();
@@ -207,10 +210,9 @@ export class User {
     const user = await this.getUser({
       subscriptions: true,
     });
-    const subscription = user.subscriptions.find((s) => s.to === address)
-    if (!subscription)
-      throw userError('Subscription not found');
-    await subscription.remove()
+    const subscription = user.subscriptions.find((s) => s.to === address);
+    if (!subscription) throw userError('Subscription not found');
+    await subscription.remove();
   };
 
   public swap = async (
@@ -242,6 +244,7 @@ export class User {
       crypto.getProvider(),
       chainId,
     );
+    // TODO: refactor?
     const pool1 = await this.factory.repository.pool.findOne({
       where: {
         base: tokenIn,
